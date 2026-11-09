@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050b18">
+<title>JARVIS AI</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#050b18;color:#d9f6ff;
+ font-family:Arial,sans-serif;min-height:100vh;
+ display:flex;flex-direction:column;align-items:center;
+}
+header{width:100%;padding:22px;text-align:center;
+ border-bottom:1px solid #123d59;letter-spacing:5px}
+h1{color:#36d9ff;font-size:29px;margin:0}
+header p{font-size:11px;color:#7698ad;letter-spacing:3px}
+.core{
+ margin:35px auto 20px;width:190px;height:190px;
+ border:3px solid #19c9ff;border-radius:50%;
+ display:flex;align-items:center;justify-content:center;
+ box-shadow:0 0 20px #008cff, inset 0 0 25px #008cff;
+ animation:pulse 3s infinite;
+}
+.core span{font-size:65px;color:#48dcff}
+@keyframes pulse{50%{box-shadow:0 0 40px #00aaff,inset 0 0 35px #008cff}}
+.status{color:#38d9ff;font-size:12px;letter-spacing:3px}
+main{width:92%;max-width:520px}
+#chat{
+ height:270px;overflow:auto;background:#091526;
+ border:1px solid #17405b;border-radius:12px;
+ padding:15px;margin:20px 0;
+}
+.msg{padding:10px;margin:8px 0;border-radius:9px;
+ font-size:14px;line-height:1.5}
+.jarvis{background:#102b40;color:#7ee7ff}
+.user{background:#183d35;color:#c6ffe2;text-align:right}
+.controls{display:flex;gap:8px}
+input{
+ flex:1;min-width:0;background:#0c1d30;
+ border:1px solid #1a6387;border-radius:9px;
+ color:white;padding:14px;font-size:15px
+}
+button{
+ background:#087ca9;color:white;border:0;
+ border-radius:9px;padding:13px;font-weight:bold;
+}
+#mic{width:100%;margin-top:12px;padding:16px}
+button:active{background:#20bce9}
+footer{padding:25px;color:#52758b;font-size:11px}
+</style>
+</head>
+<body>
+<header>
+<h1>J.A.R.V.I.S.</h1>
+<p>JUST A RATHER VERY INTELLIGENT SYSTEM</p>
+</header>
+
+<div class="core"><span>◉</span></div>
+<div class="status" id="status">SISTEMA PRONTO</div>
+
+<main>
+<div id="chat">
+<div class="msg jarvis">
+JARVIS: Buongiorno. Sono operativo. Come posso assisterti?
+</div>
+</div>
+
+<div class="controls">
+<input id="message" placeholder="Scrivi a JARVIS...">
+<button onclick="send()">INVIA</button>
+</div>
+<button id="mic" onclick="listen()">🎙️ PARLA CON JARVIS</button>
+</main>
+
+<footer>JARVIS AI · PERSONAL ASSISTANT · ITALIANO</footer>
+
+<script>
+const chat=document.getElementById("chat");
+const status=document.getElementById("status");
+
+function add(text,type){
+ const div=document.createElement("div");
+ div.className="msg "+type;
+ div.textContent=text;
+ chat.appendChild(div);
+ chat.scrollTop=chat.scrollHeight;
+}
+
+function speak(text){
+ if(!("speechSynthesis" in window))return;
+ speechSynthesis.cancel();
+ const speech=new SpeechSynthesisUtterance(text);
+ speech.lang="it-IT";
+ speech.rate=0.95;
+ const voices=speechSynthesis.getVoices();
+ const italian=voices.find(v=>v.lang.startsWith("it"));
+ if(italian)speech.voice=italian;
+ speechSynthesis.speak(speech);
+}
+
+function answer(text){
+ let t=text.toLowerCase();
+ let reply="Sono JARVIS. Posso ascoltarti e aiutarti con i comandi disponibili. Per l'intelligenza artificiale completa dovremo collegare un servizio AI.";
+
+ if(t.includes("ciao")||t.includes("buongiorno"))
+ reply="Buongiorno. JARVIS è pronto e a tua disposizione.";
+
+ else if(t.includes("come stai"))
+ reply="Tutto perfettamente funzionante. Grazie per avermelo chiesto.";
+
+ else if(t.includes("ora"))
+ reply="Puoi controllare l'ora direttamente sul tuo dispositivo.";
+
+ else if(t.includes("chi sei"))
+ reply="Sono JARVIS, il tuo assistente personale.";
+
+ else if(t.includes("apri chatgpt"))
+ {reply="Apro ChatGPT.";window.open("https://chatgpt.com","_blank");}
+
+ else if(t.includes("grazie"))
+ reply="È un piacere assisterti.";
+
+ add("JARVIS: "+reply,"jarvis");
+ speak(reply);
+}
+
+function send(){
+ const input=document.getElementById("message");
+ const text=input.value.trim();
+ if(!text)return;
+ add("TU: "+text,"user");
+ input.value="";
+ answer(text);
+}
+
+document.getElementById("message").addEventListener("keydown",e=>{
+ if(e.key==="Enter")send();
+});
+
+function listen(){
+ const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!Recognition){
+ alert("Riconoscimento vocale non supportato. Prova con Chrome.");
+ return;
+ }
+ const recognition=new Recognition();
+ recognition.lang="it-IT";
+ recognition.interimResults=false;
+ status.textContent="IN ASCOLTO...";
+ recognition.onresult=e=>{
+ const text=e.results[0][0].transcript;
+ document.getElementById("message").value=text;
+ add("TU: "+text,"user");
+ document.getElementById("message").value="";
+ answer(text);
+ };
+ recognition.onerror=()=>{
+ status.textContent="SISTEMA PRONTO";
+ };
+ recognition.onend=()=>{
+ status.textContent="SISTEMA PRONTO";
+ };
+ recognition.start();
+}
+
+</script>
+</body>
+</html>
